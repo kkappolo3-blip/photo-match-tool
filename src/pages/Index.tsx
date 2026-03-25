@@ -18,7 +18,28 @@ const Index = () => {
   });
   const [timezone, setTimezone] = useState("WITA");
   const [watermarked, setWatermarked] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      alert("GPS tidak didukung di browser ini.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        handleLocationChange(latitude, longitude);
+        setGpsLoading(false);
+      },
+      (error) => {
+        setGpsLoading(false);
+        alert("Gagal mendapatkan lokasi: " + error.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -101,9 +122,19 @@ const Index = () => {
 
           {/* Step 2: Map Location */}
           <section>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">2</span>
-              <span className="text-sm font-semibold text-step-label uppercase tracking-wide">Lokasi Peta</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">2</span>
+                <span className="text-sm font-semibold text-step-label uppercase tracking-wide">Lokasi Peta</span>
+              </div>
+              <button
+                onClick={handleDetectGPS}
+                disabled={gpsLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/><circle cx="12" cy="12" r="10"/></svg>
+                {gpsLoading ? "Mencari..." : "Deteksi GPS"}
+              </button>
             </div>
             <div className="rounded-md border border-border overflow-hidden">
               <MapPicker lat={lat} lng={lng} onLocationChange={handleLocationChange} />
