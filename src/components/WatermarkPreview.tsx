@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 
+export type WatermarkPosition = "bottom" | "top";
+
 interface WatermarkPreviewProps {
   imageFile: File | null;
   locationName: string;
@@ -8,6 +10,8 @@ interface WatermarkPreviewProps {
   lng: number;
   dateTime: string;
   timezone: string;
+  fontSize: number; // 0.5 - 2.0 scale multiplier
+  position: WatermarkPosition;
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void;
 }
 
@@ -19,6 +23,8 @@ export default function WatermarkPreview({
   lng,
   dateTime,
   timezone,
+  fontSize: fontScale,
+  position,
   onCanvasReady,
 }: WatermarkPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,7 +40,6 @@ export default function WatermarkPreview({
     setImageSrc(null);
   }, [imageFile]);
 
-  // Load static map image
   useEffect(() => {
     const mapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=150x100&markers=${lat},${lng},red-pushpin`;
     const img = new Image();
@@ -55,21 +60,19 @@ export default function WatermarkPreview({
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
-
       ctx.drawImage(img, 0, 0);
 
-      // Watermark overlay at bottom
       const overlayHeight = img.height * 0.22;
-      const overlayY = img.height - overlayHeight;
+      const overlayY = position === "top" ? 0 : img.height - overlayHeight;
 
-      // Semi-transparent dark overlay
       ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       ctx.fillRect(0, overlayY, img.width, overlayHeight);
 
       const padding = img.width * 0.03;
-      const fontSize = Math.max(12, img.width * 0.025);
+      const baseFontSize = Math.max(12, img.width * 0.025);
+      const fontSize = baseFontSize * fontScale;
 
-      // Location name (bold, yellow)
+      // Location name
       ctx.fillStyle = "#FFD700";
       ctx.font = `bold ${fontSize * 1.4}px sans-serif`;
       ctx.fillText(locationName || "LOKASI", padding, overlayY + fontSize * 2);
@@ -103,7 +106,7 @@ export default function WatermarkPreview({
       lineY += fontSize * 1.3;
       ctx.fillText(`${dateTime} ${timezone}`, padding, lineY);
 
-      // Draw mini map on right side
+      // Mini map
       if (mapImage) {
         const mapW = img.width * 0.2;
         const mapH = overlayHeight * 0.8;
@@ -118,7 +121,7 @@ export default function WatermarkPreview({
       onCanvasReady?.(canvas);
     };
     img.src = imageSrc;
-  }, [imageSrc, locationName, address, lat, lng, dateTime, timezone, mapImage, onCanvasReady]);
+  }, [imageSrc, locationName, address, lat, lng, dateTime, timezone, mapImage, fontScale, position, onCanvasReady]);
 
   if (!imageFile) {
     return (
