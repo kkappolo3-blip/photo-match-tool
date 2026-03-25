@@ -18,7 +18,28 @@ const Index = () => {
   });
   const [timezone, setTimezone] = useState("WITA");
   const [watermarked, setWatermarked] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      alert("GPS tidak didukung di browser ini.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        handleLocationChange(latitude, longitude);
+        setGpsLoading(false);
+      },
+      (error) => {
+        setGpsLoading(false);
+        alert("Gagal mendapatkan lokasi: " + error.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
