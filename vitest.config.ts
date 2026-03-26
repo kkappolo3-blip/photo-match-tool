@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig({
+  base: '/photo-match-tool/', // <--- TAMBAHKAN BARIS INI
   plugins: [react()],
   test: {
     environment: "jsdom",
